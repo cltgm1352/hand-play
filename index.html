@@ -43,7 +43,7 @@
     let currentVrm;
     const loader = new GLTFLoader();
     loader.load(
-      'https://your-vrm-hosting-url/your-model.vrm',  // ← ここを変える！（例: https://.../sample.vrm）
+      'https://cltgm1352.github.io/hand-play/CoolBanana.vrm',  // ← ここを変える！（例: https://.../sample.vrm）
       async (gltf) => {
         VRMUtils.removeUnnecessaryJoints(gltf.scene);
         currentVrm = await VRM.from(gltf);

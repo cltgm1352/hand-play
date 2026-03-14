@@ -1,823 +1,152 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>✋ Hand Play — 手で遊ぼう</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Zen+Dots&family=M+PLUS+Rounded+1c:wght@400;700&display=swap');
-
-  :root {
-    --bg: #0a0a0f;
-    --panel: #12121a;
-    --border: #2a2a40;
-    --accent: #7c3aed;
-    --accent2: #06b6d4;
-    --accent3: #f59e0b;
-    --text: #e2e8f0;
-    --muted: #64748b;
-    --glow: rgba(124, 58, 237, 0.4);
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'M PLUS Rounded 1c', sans-serif;
-    min-height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* ── Header ── */
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 20px;
-    background: rgba(10,10,15,0.95);
-    border-bottom: 1px solid var(--border);
-    z-index: 100;
-  }
-  header h1 {
-    font-family: 'Zen Dots', cursive;
-    font-size: 1.2rem;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: 2px;
-  }
-  #score-display {
-    font-family: 'Zen Dots', cursive;
-    font-size: 1.4rem;
-    color: var(--accent3);
-    text-shadow: 0 0 12px var(--accent3);
-  }
-  #mode-label {
-    font-size: 0.8rem;
-    color: var(--muted);
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 4px 12px;
-  }
-
-  /* ── Layout ── */
-  #main {
-    display: flex;
-    flex: 1;
-    gap: 0;
-    overflow: hidden;
-  }
-
-  /* ── Canvas area ── */
-  #canvas-wrap {
-    position: relative;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: radial-gradient(ellipse at center, #1a0a2e 0%, #0a0a0f 70%);
-  }
-
-  #video { display: none; }
-
-  #overlay {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
-
-  #game-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
-
-  /* ── Start overlay ── */
-  #start-screen {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(10,10,15,0.92);
-    z-index: 50;
-    gap: 20px;
-    text-align: center;
-  }
-  #start-screen h2 {
-    font-family: 'Zen Dots', cursive;
-    font-size: 2.2rem;
-    background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent3));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%,100% { filter: brightness(1); }
-    50% { filter: brightness(1.4); }
-  }
-  #start-screen p {
-    color: var(--muted);
-    font-size: 0.95rem;
-    max-width: 360px;
-    line-height: 1.7;
-  }
-  #start-btn {
-    font-family: 'M PLUS Rounded 1c', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    padding: 14px 36px;
-    border: none;
-    border-radius: 50px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: white;
-    cursor: pointer;
-    box-shadow: 0 0 24px var(--glow);
-    transition: transform 0.15s, box-shadow 0.15s;
-    letter-spacing: 1px;
-  }
-  #start-btn:hover {
-    transform: scale(1.06);
-    box-shadow: 0 0 40px var(--glow);
-  }
-
-  /* ── Mode buttons ── */
-  #mode-bar {
-    display: flex;
-    gap: 8px;
-    margin-top: 4px;
-  }
-  .mode-btn {
-    font-family: 'M PLUS Rounded 1c', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 700;
-    padding: 8px 18px;
-    border: 2px solid var(--border);
-    border-radius: 30px;
-    background: var(--panel);
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .mode-btn:hover { border-color: var(--accent); color: var(--text); }
-  .mode-btn.active {
-    border-color: var(--accent);
-    color: white;
-    background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(6,182,212,0.2));
-    box-shadow: 0 0 12px rgba(124,58,237,0.3);
-  }
-
-  /* ── Side panel ── */
-  #side-panel {
-    width: 200px;
-    background: var(--panel);
-    border-left: 1px solid var(--border);
-    padding: 16px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    overflow-y: auto;
-  }
-  #side-panel h3 {
-    font-family: 'Zen Dots', cursive;
-    font-size: 0.7rem;
-    color: var(--muted);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-  .stat-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.82rem;
-    color: var(--muted);
-    padding: 4px 0;
-    border-bottom: 1px solid #1e1e2e;
-  }
-  .stat-row span:last-child { color: var(--text); font-weight: 700; }
-
-  .hand-indicator {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-  }
-  .dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: var(--muted);
-    transition: background 0.2s, box-shadow 0.2s;
-  }
-  .dot.active {
-    background: #22c55e;
-    box-shadow: 0 0 8px #22c55e;
-  }
-
-  /* ── Gesture badge ── */
-  #gesture-badge {
-    font-size: 2.5rem;
-    text-align: center;
-    height: 52px;
-    line-height: 52px;
-    transition: transform 0.15s;
-  }
-  #gesture-name {
-    text-align: center;
-    font-size: 0.8rem;
-    color: var(--accent2);
-    font-weight: 700;
-    letter-spacing: 1px;
-    min-height: 20px;
-  }
-
-  /* ── Tip ── */
-  .tip {
-    font-size: 0.75rem;
-    color: var(--muted);
-    line-height: 1.6;
-    background: rgba(255,255,255,0.03);
-    border-radius: 8px;
-    padding: 10px;
-    border: 1px solid var(--border);
-  }
-  .tip strong { color: var(--accent2); }
-
-  /* ── Feedback flash ── */
-  #feedback {
-    position: fixed;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%) scale(0.8);
-    font-family: 'Zen Dots', cursive;
-    font-size: 2rem;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.1s, transform 0.1s;
-    z-index: 200;
-    text-shadow: 0 0 20px currentColor;
-  }
-  #feedback.show {
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediaPipe × Three.js 擬似VTuber</title>
+  <style>
+    body { margin:0; overflow:hidden; background:#000; }
+    #video { position:absolute; top:10px; left:10px; width:240px; opacity:0.6; }
+    canvas { display:block; }
+  </style>
 </head>
 <body>
+  <video id="video" autoplay playsinline></video>
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js';
+    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/controls/OrbitControls.js';
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/loaders/GLTFLoader.js';
+    import { VRM, VRMUtils } from 'https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.0.9/lib/three-vrm.module.js';
+    import { FaceLandmarker, FilesetResolver, DrawingUtils } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+    // Kalidokit（blendshape変換用） - CDN版
+    import { Face, Utils } from 'https://cdn.jsdelivr.net/npm/kalidokit@1.1.5/dist/kalidokit.umd.js';
 
-<header>
-  <h1>✋ HAND PLAY</h1>
-  <div id="score-display">🎯 0</div>
-  <div id="mode-label">モード選択中</div>
-</header>
+    // ─────────────── シーン準備 ───────────────
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x222222);
 
-<div id="main">
-  <div id="canvas-wrap">
-    <video id="video" autoplay playsinline muted></video>
-    <canvas id="game-canvas"></canvas>
+    const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 1.4, 2.5);
 
-    <!-- Start Screen -->
-    <div id="start-screen">
-      <div style="font-size:4rem">🖐️</div>
-      <h2>HAND PLAY</h2>
-      <p>カメラを使って手を認識し、遊べるゲームです。<br>
-         ゲームモードを選んで「スタート」を押してください。</p>
-      <div id="mode-bar">
-        <button class="mode-btn active" data-mode="bubbles">🫧 バブル</button>
-        <button class="mode-btn" data-mode="paint">🎨 お絵かき</button>
-        <button class="mode-btn" data-mode="catch">⭐ キャッチ</button>
-      </div>
-      <button id="start-btn">📷 カメラ起動 &amp; スタート</button>
-      <p style="font-size:0.75rem; color: #444; margin-top:-8px">カメラへのアクセスを許可してください</p>
-    </div>
-  </div>
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-  <!-- Side Panel -->
-  <div id="side-panel">
-    <h3>手の状態</h3>
-    <div class="hand-indicator"><div class="dot" id="dot-left"></div><span>左手</span></div>
-    <div class="hand-indicator"><div class="dot" id="dot-right"></div><span>右手</span></div>
+    const light = new THREE.DirectionalLight(0xffffff, 1.2);
+    light.position.set(1, 1, 1);
+    scene.add(light, new THREE.AmbientLight(0xffffff, 0.6));
 
-    <div id="gesture-badge">🤚</div>
-    <div id="gesture-name">—</div>
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.4, 0);
 
-    <h3>スコア</h3>
-    <div class="stat-row"><span>合計</span><span id="stat-total">0</span></div>
-    <div class="stat-row"><span>最高</span><span id="stat-best">0</span></div>
-    <div class="stat-row"><span>コンボ</span><span id="stat-combo">0</span></div>
-
-    <h3>操作ヒント</h3>
-    <div class="tip" id="hint-text">モードを選んでスタート！</div>
-  </div>
-</div>
-
-<div id="feedback"></div>
-
-<!-- MediaPipe -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-
-<script>
-// ── State ──────────────────────────────────────────
-const state = {
-  mode: 'bubbles',
-  started: false,
-  score: 0,
-  best: 0,
-  combo: 0,
-  hands: [],          // [{landmarks, handedness}]
-  canvas: null,
-  ctx: null,
-  width: 0,
-  height: 0,
-};
-
-const hints = {
-  bubbles: '✊ グーでバブル生成<br>🤏 人差し指でバブルを割ろう！',
-  paint:   '☝️ 人差し指で描く<br>✊ グーで消去<br>🖐 手を広げて色を変える',
-  catch:   '🖐 手のひらを開いて<br>⭐ 降ってくる星を触れてキャッチ！',
-};
-
-// ── DOM refs ───────────────────────────────────────
-const video      = document.getElementById('video');
-const gameCanvas = document.getElementById('game-canvas');
-const ctx        = gameCanvas.getContext('2d');
-const startScreen= document.getElementById('start-screen');
-const startBtn   = document.getElementById('start-btn');
-const modeBtns   = document.querySelectorAll('.mode-btn');
-const modeLabel  = document.getElementById('mode-label');
-const scoreDisp  = document.getElementById('score-display');
-const dotLeft    = document.getElementById('dot-left');
-const dotRight   = document.getElementById('dot-right');
-const gestureBadge = document.getElementById('gesture-badge');
-const gestureName  = document.getElementById('gesture-name');
-const statTotal  = document.getElementById('stat-total');
-const statBest   = document.getElementById('stat-best');
-const statCombo  = document.getElementById('stat-combo');
-const hintText   = document.getElementById('hint-text');
-const feedback   = document.getElementById('feedback');
-
-// ── Resize ─────────────────────────────────────────
-function resize() {
-  const wrap = document.getElementById('canvas-wrap');
-  gameCanvas.width  = wrap.clientWidth;
-  gameCanvas.height = wrap.clientHeight;
-  state.width  = gameCanvas.width;
-  state.height = gameCanvas.height;
-}
-window.addEventListener('resize', resize);
-resize();
-
-// ── Score helpers ──────────────────────────────────
-function addScore(pts) {
-  state.score += pts;
-  state.combo++;
-  if (state.score > state.best) state.best = state.score;
-  updateUI();
-  showFeedback(pts > 1 ? `+${pts} 🔥` : `+${pts}`);
-}
-function resetCombo() { state.combo = 0; updateUI(); }
-function updateUI() {
-  scoreDisp.textContent = `🎯 ${state.score}`;
-  statTotal.textContent = state.score;
-  statBest.textContent  = state.best;
-  statCombo.textContent = state.combo;
-}
-
-// ── Feedback flash ─────────────────────────────────
-let fbTimer;
-function showFeedback(text, color='#f59e0b') {
-  feedback.textContent = text;
-  feedback.style.color = color;
-  feedback.classList.add('show');
-  clearTimeout(fbTimer);
-  fbTimer = setTimeout(() => feedback.classList.remove('show'), 700);
-}
-
-// ── Gesture detection ──────────────────────────────
-function detectGesture(lm) {
-  // lm: 21 landmarks [{x,y,z}]
-  const tips = [4,8,12,16,20];
-  const mcp  = [2,5,9,13,17];
-  // finger extended?
-  const ext = [
-    lm[4].x < lm[3].x,          // thumb (simplified, right hand)
-    lm[8].y  < lm[6].y,
-    lm[12].y < lm[10].y,
-    lm[16].y < lm[14].y,
-    lm[20].y < lm[18].y,
-  ];
-  const count = ext.filter(Boolean).length;
-  if (count === 0) return {name:'グー', emoji:'✊', count};
-  if (count === 5) return {name:'パー', emoji:'🖐', count};
-  if (ext[1] && !ext[2] && !ext[3] && !ext[4]) return {name:'人差し指', emoji:'☝️', count};
-  if (ext[1] && ext[2] && !ext[3] && !ext[4]) return {name:'ピース', emoji:'✌️', count};
-  if (!ext[1] && !ext[2] && !ext[3] && ext[4]) return {name:'ピンキー', emoji:'🤙', count};
-  return {name:`${count}本`, emoji:'🤚', count};
-}
-
-// ── Hand landmark to canvas coords ────────────────
-function lmToCanvas(lm, idx) {
-  // video is mirrored
-  return {
-    x: (1 - lm[idx].x) * state.width,
-    y: lm[idx].y * state.height,
-  };
-}
-function tipPos(lm, tipIdx=8) {
-  return lmToCanvas(lm, tipIdx);
-}
-function palmCenter(lm) {
-  const pts = [0,5,9,13,17].map(i => lmToCanvas(lm,i));
-  return {
-    x: pts.reduce((s,p)=>s+p.x,0)/pts.length,
-    y: pts.reduce((s,p)=>s+p.y,0)/pts.length,
-  };
-}
-
-// ══════════════════════════════════════════════════
-//  MODE: BUBBLES
-// ══════════════════════════════════════════════════
-const bubbles = [];
-let bubbleTimer = 0;
-
-function spawnBubble() {
-  const colors = ['#7c3aed','#06b6d4','#f59e0b','#ec4899','#22c55e'];
-  bubbles.push({
-    x: Math.random() * state.width,
-    y: state.height + 40,
-    r: 20 + Math.random() * 30,
-    vx: (Math.random()-0.5) * 1.5,
-    vy: -(0.8 + Math.random() * 1.2),
-    color: colors[Math.floor(Math.random()*colors.length)],
-    alive: true,
-    pop: 0,
-  });
-}
-
-function updateBubbles() {
-  bubbleTimer++;
-  if (bubbleTimer % 40 === 0) spawnBubble();
-
-  for (const b of bubbles) {
-    if (!b.alive) { b.pop += 0.15; continue; }
-    b.x += b.vx; b.y += b.vy;
-    if (b.y < -60) b.alive = false;
-  }
-  // prune
-  for (let i = bubbles.length-1; i >= 0; i--) {
-    if (!bubbles[i].alive && bubbles[i].pop > 1) bubbles.splice(i,1);
-  }
-}
-
-function drawBubbles() {
-  for (const b of bubbles) {
-    const alpha = b.alive ? 0.75 : (1-b.pop)*0.7;
-    const r = b.alive ? b.r : b.r * (1 + b.pop * 0.5);
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    // bubble gradient
-    const g = ctx.createRadialGradient(b.x-r*0.3, b.y-r*0.3, r*0.05, b.x, b.y, r);
-    g.addColorStop(0,'rgba(255,255,255,0.5)');
-    g.addColorStop(0.4, b.color+'bb');
-    g.addColorStop(1,'transparent');
-    ctx.beginPath(); ctx.arc(b.x,b.y,r,0,Math.PI*2);
-    ctx.fillStyle = g; ctx.fill();
-    // rim
-    ctx.strokeStyle = b.color+'88';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    ctx.restore();
-  }
-}
-
-function checkBubblePop(hands) {
-  for (const {lm, gesture} of hands) {
-    const tip = tipPos(lm, 8);
-    for (const b of bubbles) {
-      if (!b.alive) continue;
-      const dx = tip.x - b.x, dy = tip.y - b.y;
-      if (Math.sqrt(dx*dx+dy*dy) < b.r) {
-        b.alive = false;
-        addScore(state.combo > 3 ? 3 : 1);
+    // VRMモデル読み込み（VRoid Hubなどから好きなVRMをホスティングしてURLを入れる）
+    let currentVrm;
+    const loader = new GLTFLoader();
+    loader.load(
+      'https://your-vrm-hosting-url/your-model.vrm',  // ← ここを変える！（例: https://.../sample.vrm）
+      async (gltf) => {
+        VRMUtils.removeUnnecessaryJoints(gltf.scene);
+        currentVrm = await VRM.from(gltf);
+        scene.add(currentVrm.scene);
+        currentVrm.scene.position.set(0, 0, 0);
       }
-    }
-  }
-}
+    );
 
-// ══════════════════════════════════════════════════
-//  MODE: PAINT
-// ══════════════════════════════════════════════════
-let paintCanvas, pCtx;
-let paintColor = '#7c3aed';
-let paintHue = 270;
-let lastPaint = null;
-let painting = false;
+    // ─────────────── MediaPipe Face Landmarker ───────────────
+    const filesetResolver = await FilesetResolver.forVisionTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+    );
 
-function initPaint() {
-  paintCanvas = document.createElement('canvas');
-  paintCanvas.width = state.width;
-  paintCanvas.height = state.height;
-  pCtx = paintCanvas.getContext('2d');
-}
+    const faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
+      baseOptions: {
+        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
+        delegate: "GPU"
+      },
+      outputFaceBlendshapes: true,
+      outputFacialTransformationMatrixes: true,
+      runningMode: "VIDEO",
+      numFaces: 1
+    });
 
-const paintColors = ['#7c3aed','#06b6d4','#f59e0b','#ec4899','#22c55e','#ef4444','#fff'];
-let paintColorIdx = 0;
+    // カメラ起動
+    const video = document.getElementById('video');
+    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+      video.srcObject = stream;
+      video.onloadedmetadata = () => {
+        video.play();
+        predictWebcam();
+      };
+    });
 
-function updatePaint(hands) {
-  if (!pCtx) return;
-  for (const {lm, gesture} of hands) {
-    if (gesture.name === 'グー') {
-      // clear
-      pCtx.clearRect(0,0,paintCanvas.width,paintCanvas.height);
-      lastPaint = null; painting = false;
-      showFeedback('🗑️ クリア！','#06b6d4');
-      return;
-    }
-    if (gesture.name === 'パー') {
-      // change color
-      if (!painting) {
-        paintColorIdx = (paintColorIdx+1) % paintColors.length;
-        paintColor = paintColors[paintColorIdx];
-        showFeedback('🎨 色変更', paintColor);
-      }
-      painting = true;
-    } else if (gesture.name === '人差し指') {
-      const pt = tipPos(lm, 8);
-      pCtx.lineWidth = 6;
-      pCtx.lineCap = 'round';
-      pCtx.strokeStyle = paintColor;
-      pCtx.shadowBlur = 12;
-      pCtx.shadowColor = paintColor;
-      if (lastPaint) {
-        pCtx.beginPath();
-        pCtx.moveTo(lastPaint.x, lastPaint.y);
-        pCtx.lineTo(pt.x, pt.y);
-        pCtx.stroke();
-        addScore(0.01 | 0); // silent
-      }
-      lastPaint = pt;
-      painting = true;
-    } else {
-      lastPaint = null;
-      painting = false;
-    }
-  }
-  if (hands.length === 0) { lastPaint = null; painting = false; }
-}
+    // 描画ループ
+    const drawingUtils = new DrawingUtils();
+    let lastVideoTime = -1;
 
-function drawPaint() {
-  if (paintCanvas) ctx.drawImage(paintCanvas, 0, 0);
-}
+    async function predictWebcam() {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        const startTimeMs = performance.now();
+        if (lastVideoTime !== video.currentTime) {
+          lastVideoTime = video.currentTime;
+          const results = await faceLandmarker.detectForVideo(video, startTimeMs);
 
-// ══════════════════════════════════════════════════
-//  MODE: CATCH
-// ══════════════════════════════════════════════════
-const stars = [];
-let starTimer = 0;
-const starTypes = [
-  {emoji:'⭐',pts:1,speed:1.5,r:24},
-  {emoji:'💎',pts:3,speed:2.5,r:20},
-  {emoji:'🌙',pts:2,speed:1,r:28},
-  {emoji:'💥',pts:-1,speed:1.8,r:22}, // bomb
-];
+          if (results.faceLandmarks?.length > 0 && currentVrm) {
+            const face = results.faceLandmarks[0];
+            const blendshapes = results.faceBlendshapes[0]?.categories || [];
 
-function spawnStar() {
-  const t = starTypes[Math.floor(Math.random()*starTypes.length)];
-  stars.push({
-    ...t,
-    x: 30 + Math.random()*(state.width-60),
-    y: -30,
-    alive: true,
-    caught: 0,
-  });
-}
+            // KalidokitでVRM用に変換
+            const solved = Face.solve(face, {
+              runtime: "mediapipe",
+              refineLandmarks: true,
+              // 必要に応じて調整
+            });
 
-function updateStars() {
-  starTimer++;
-  const interval = Math.max(20, 60 - Math.floor(state.score/20));
-  if (starTimer % interval === 0) spawnStar();
-  for (const s of stars) {
-    if (!s.alive) { s.caught += 0.1; continue; }
-    s.y += s.speed;
-    if (s.y > state.height + 40) { s.alive = false; resetCombo(); }
-  }
-  for (let i=stars.length-1;i>=0;i--) {
-    if (!stars[i].alive && stars[i].caught>1) stars.splice(i,1);
-  }
-}
+            // VRMに適用（Kalidokitの値はほぼそのままblendshapeにマップ可能）
+            const { expressions } = solved;
 
-function drawStars() {
-  for (const s of stars) {
-    ctx.save();
-    const scale = s.alive ? 1 : (1 + s.caught * 0.5);
-    const alpha = s.alive ? 1 : Math.max(0, 1 - s.caught);
-    ctx.globalAlpha = alpha;
-    ctx.font = `${s.r*2*scale}px serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(s.emoji, s.x, s.y);
-    ctx.restore();
-  }
-}
+            // 例: まばたき・口開き・笑顔など
+            if (currentVrm.expressionManager) {
+              currentVrm.expressionManager.setValue('blinkLeft', expressions.blink.l);
+              currentVrm.expressionManager.setValue('blinkRight', expressions.blink.r);
+              currentVrm.expressionManager.setValue('happy', expressions.mouthSmile.l + expressions.mouthSmile.r);
+              currentVrm.expressionManager.setValue('angry', expressions.browDownLeft + expressions.browDownRight);
+              // 他にもjoy, sorrow, angry などVRM標準blendshapeにマップ
+            }
 
-function checkCatch(hands) {
-  for (const {lm} of hands) {
-    const palm = palmCenter(lm);
-    for (const s of stars) {
-      if (!s.alive) continue;
-      const dx = palm.x - s.x, dy = palm.y - s.y;
-      if (Math.sqrt(dx*dx+dy*dy) < s.r + 30) {
-        s.alive = false;
-        if (s.pts > 0) addScore(s.pts);
-        else {
-          state.score = Math.max(0, state.score - 1);
-          state.combo = 0;
-          updateUI();
-          showFeedback('💥 ボム！','#ef4444');
+            // 頭の回転（neckボーン）
+            if (currentVrm.humanoid?.getNormalizedBoneNode('head')) {
+              const head = currentVrm.humanoid.getNormalizedBoneNode('head');
+              head.rotation.setFromQuaternion(
+                new THREE.Quaternion().setFromEuler(
+                  new THREE.Euler(solved.head.degrees.y * THREE.MathUtils.DEG2RAD,
+                                  solved.head.degrees.x * THREE.MathUtils.DEG2RAD,
+                                  solved.head.degrees.z * THREE.MathUtils.DEG2RAD,
+                                  'YXZ')
+                )
+              );
+            }
+          }
+
+          // オプション：顔メッシュ描画（デバッグ用）
+          // drawingUtils.drawLandmarks(canvasCtx, results.faceLandmarks, {color: '#00FF00'});
         }
       }
+      requestAnimationFrame(predictWebcam);
     }
-  }
-}
 
-// ══════════════════════════════════════════════════
-//  HAND DRAWING (skeleton)
-// ══════════════════════════════════════════════════
-const CONNECTIONS = [
-  [0,1],[1,2],[2,3],[3,4],
-  [0,5],[5,6],[6,7],[7,8],
-  [0,9],[9,10],[10,11],[11,12],
-  [0,13],[13,14],[14,15],[15,16],
-  [0,17],[17,18],[18,19],[19,20],
-  [5,9],[9,13],[13,17],
-];
+    // リサイズ対応
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
 
-function drawHand(lm, color='#7c3aed') {
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
-  ctx.shadowBlur = 8;
-  ctx.shadowColor = color;
-  for (const [a,b] of CONNECTIONS) {
-    const pa = lmToCanvas(lm,a), pb = lmToCanvas(lm,b);
-    ctx.beginPath(); ctx.moveTo(pa.x,pa.y); ctx.lineTo(pb.x,pb.y); ctx.stroke();
-  }
-  // joints
-  for (let i=0;i<21;i++) {
-    const p = lmToCanvas(lm,i);
-    ctx.beginPath();
-    ctx.arc(p.x,p.y, i===0?6:3, 0, Math.PI*2);
-    ctx.fillStyle = i===8 ? '#f59e0b' : color;
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-// ══════════════════════════════════════════════════
-//  MAIN LOOP
-// ══════════════════════════════════════════════════
-function gameLoop() {
-  if (!state.started) { requestAnimationFrame(gameLoop); return; }
-  ctx.clearRect(0, 0, state.width, state.height);
-
-  // BG
-  ctx.fillStyle = 'rgba(10,10,15,0.35)';
-  ctx.fillRect(0,0,state.width,state.height);
-
-  // parse current hands
-  const hands = state.hands.map(h => ({
-    lm: h.landmarks,
-    handedness: h.handedness,
-    gesture: detectGesture(h.landmarks),
-  }));
-
-  // update dots
-  const hasLeft  = hands.some(h=>h.handedness==='Left');
-  const hasRight = hands.some(h=>h.handedness==='Right');
-  dotLeft.classList.toggle('active', hasLeft);
-  dotRight.classList.toggle('active', hasRight);
-
-  // gesture display (first hand)
-  if (hands.length > 0) {
-    const g = hands[0].gesture;
-    gestureBadge.textContent = g.emoji;
-    gestureName.textContent  = g.name;
-  } else {
-    gestureBadge.textContent = '✋';
-    gestureName.textContent  = '手を映してね';
-  }
-
-  // mode update
-  if (state.mode === 'bubbles') {
-    updateBubbles();
-    drawBubbles();
-    checkBubblePop(hands);
-  } else if (state.mode === 'paint') {
-    updatePaint(hands);
-    drawPaint();
-  } else if (state.mode === 'catch') {
-    updateStars();
-    drawStars();
-    checkCatch(hands);
-  }
-
-  // draw hand skeletons
-  const handColors = ['#7c3aed','#06b6d4'];
-  hands.forEach((h,i) => drawHand(h.lm, handColors[i%2]));
-
-  // index finger trail effect (catch mode)
-  if (state.mode === 'catch' && hands.length > 0) {
-    const palm = palmCenter(hands[0].lm);
-    ctx.save();
-    ctx.beginPath(); ctx.arc(palm.x,palm.y,40,0,Math.PI*2);
-    ctx.strokeStyle = 'rgba(124,58,237,0.3)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  requestAnimationFrame(gameLoop);
-}
-
-// ══════════════════════════════════════════════════
-//  MediaPipe setup
-// ══════════════════════════════════════════════════
-function initMediaPipe() {
-  const hands = new Hands({locateFile: f =>
-    `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
-  });
-  hands.setOptions({
-    maxNumHands: 2,
-    modelComplexity: 1,
-    minDetectionConfidence: 0.7,
-    minTrackingConfidence: 0.5,
-  });
-  hands.onResults(results => {
-    state.hands = results.multiHandLandmarks
-      ? results.multiHandLandmarks.map((lm, i) => ({
-          landmarks: lm,
-          handedness: results.multiHandedness[i].label,
-        }))
-      : [];
-  });
-
-  const camera = new Camera(video, {
-    onFrame: async () => { await hands.send({image: video}); },
-    width: 640, height: 480,
-  });
-  camera.start();
-}
-
-// ══════════════════════════════════════════════════
-//  UI events
-// ══════════════════════════════════════════════════
-modeBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    modeBtns.forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    state.mode = btn.dataset.mode;
-  });
-});
-
-startBtn.addEventListener('click', async () => {
-  startBtn.textContent = '⏳ 起動中...';
-  startBtn.disabled = true;
-  try {
-    await navigator.mediaDevices.getUserMedia({video:true});
-    initMediaPipe();
-    if (state.mode === 'paint') initPaint();
-    state.started = true;
-    startScreen.style.display = 'none';
-    modeLabel.textContent = {bubbles:'🫧 バブル', paint:'🎨 お絵かき', catch:'⭐ キャッチ'}[state.mode];
-    hintText.innerHTML = hints[state.mode];
-    requestAnimationFrame(gameLoop);
-  } catch(e) {
-    startBtn.textContent = '❌ カメラ許可が必要です';
-    startBtn.disabled = false;
-  }
-});
-
-// mode switch in-game
-modeBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (!state.started) return;
-    modeLabel.textContent = {bubbles:'🫧 バブル', paint:'🎨 お絵かき', catch:'⭐ キャッチ'}[state.mode];
-    hintText.innerHTML = hints[state.mode];
-    // reset game objects
-    bubbles.length = 0; stars.length = 0;
-    if (state.mode === 'paint') initPaint();
-    state.score = 0; state.combo = 0; updateUI();
-  });
-});
-
-// start loop (waits for started flag)
-requestAnimationFrame(gameLoop);
-</script>
+    function animate() {
+      requestAnimationFrame(animate);
+      if (currentVrm) currentVrm.update(performance.now() / 1000);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
 </body>
 </html>
